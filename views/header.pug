@@ -1,0 +1,14 @@
+doctype html
+header
+	a(href="/") 首页
+	| 
+	if user
+		span 欢迎, #{user.name}
+		| 
+		a(href="/add-thread") 发布
+		| 
+		a(href="/logout") 退出
+	else
+		a(href="/login") 登录
+		| 
+		a(href="/register") 注册

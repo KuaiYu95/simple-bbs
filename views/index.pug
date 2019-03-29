@@ -1,0 +1,6 @@
+include header.pug
+ul
+	each post in posts
+		li 
+			a(href='/post/' + post.id)= post.title
+			small= moment(post.timestamp).fromNow()

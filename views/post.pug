@@ -1,0 +1,10 @@
+include header.pug
+if post
+	div
+		h1
+			| #{post.title}
+			| 发布人：
+			a(href='/user/#{post.owner}')= post.owner
+		article= post.content
+else
+	div 没有这个帖子

@@ -1,0 +1,9 @@
+include header.pug
+if status == 'REGISTER_SUCCESS'
+	div 注册成功, 3秒后跳转到首页
+else if status == 'USERNAME_USED'
+	div 注册失败，用户名已被注册
+script.
+	setTimeout(() => {
+		location.href = '/'
+	}, 3000)
