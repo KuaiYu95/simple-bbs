@@ -1,25 +1,36 @@
 const express = require('express')
 const moment = require('moment')
+// const sqlite3 = require('sqlite3').verbose()
+// sqlite 将 sqlite3 封装成了 promise
+// 可以对回调进行优化
+const sqlite = require('sqlite')
 const cookieParser = require('cookie-parser')
+const logger = require('morgan')
 const app = express()
 const port = 8088
 
-const users = [{	// 用户
-	id: 42,
-	name: 'a',
-	password: 'a',
-	// email: 'damiao@damiao.io'
-}, {
-	id: 41,
-	name: 'zs',
-	password: '1',
-	// email: 'zs@zs.io'
-}, {
-	id: 40,
-	name: 'ls',
-	password: '12',
-	// email: 'ls@sl.io'
-}]
+
+var db
+console.log('opening database...')
+sqlite.open(__dirname + '/bbs.sqlite3').then(val => {
+	console.log('database open success')
+	db = val
+	console.log('starting web server...')
+	app.listen(port, () => {
+		console.log('Sever listening on port', port)
+	})
+})
+
+/*
+sqlite3 改为 sqlite
+const db = new sqlite3.Database(__dirname + '/bbs.sqlite3', () => {
+	console.log('database open success')
+	console.log('starting web server...')
+	app.listen(port, () => {
+		console.log('Sever listening on port', port)
+	})
+})
+*/
 
 const comments = []	// 评论
 
@@ -47,19 +58,49 @@ app.locals.pretty = true
 app.set('view engine', 'pug')//设置使用的模板引擎
 // app.set('views', __dirname + '/templates')//设置模板文件的文件夹
 
+// app.engine('hbs', require('hbs').__express)
+
+app.use(logger('dev'))
 app.use(express.json())
-app.use(express.urlencoded())
+app.use(express.urlencoded({
+	extended: true	// 开启解析扩展url编码的功能foo[bar]=a&[foobaz]=b
+}))
 app.use(cookieParser('cookie signer'))
 
-app.use((req, res, next) => {
-	if (req.signedCookies.user) {
-		req.user = users.find(it => it.name == req.signedCookies.user)
+
+/*---------------------------
+	      获取用户信息	
+---------------------------*/
+app.use(async(req, res, next) => {
+	if (req.signedCookies.loginUser) {
+		try {
+			req.user = await db.get('SELECT * FROM users WHERE name=?', req.signedCookies.loginUser)
+		} catch(e) {
+			next(e)
+			return
+		}
 	}
 	next()
+	/* 将回调改为try/catch
+	if (req.signedCookies.loginUser) {
+		db.get('SELECT * FROM users WHERE name=?', req.signedCookies.loginUser, (err, user) => {
+			if (err) {
+				next(err)
+			} else {
+				req.user = user
+				next()
+			}
+		})
+	} else {
+		next()
+	}
+	*/
 })
 
-
-app.get('/', (req, res, next) => {	// 首页
+/*---------------------------
+	      首页	
+---------------------------*/
+app.get('/', async(req, res, next) => {
 	res.render('index.pug', {
 		user: req.user,
 		posts: posts,
@@ -67,11 +108,28 @@ app.get('/', (req, res, next) => {	// 首页
 	})
 })
 
-app.route('/add-thread') // 发帖
-	.get((req, res, next) => {
-		res.render('add-thread.pug', {user : req.user})
+/*---------------------------
+	      发帖界面	
+---------------------------*/
+app.route('/add-post')
+	.get(async(req, res, next) => {
+		res.render('add-post.pug', {user : req.user})
 	})
-	.post((req, res, next) => {
+	.post(async(req, res, next) => {
+		if (req.user) {
+			try {
+				await db.run('INSERT INTO posts (title, content, owner, timestamp) VALUES (?,?,?,?)', 
+					req.body.title, req.body.content, req.user.userId, Date.now())
+				var post = await db.get('SELECT * FROM posts ORDER BY id DESC LIMIT 1')
+				res.redirect('/post/' + post.id)
+			} catch(e) {
+				next(e)
+				return
+			}
+		} else {
+			res.send('未登录！')
+		}
+		/*
 		if (req.user) { // 由用户登陆才能发
 			var thread = req.body
 			var lastThread = posts[posts.length - 1]
@@ -83,65 +141,117 @@ app.route('/add-thread') // 发帖
 		} else {
 			res.send('未登录！')
 		}
+		*/
 	})
 
-app.get('/post/:id', (req, res, next) => {	// 看帖
-	var post = posts.find(it => it.id == req.params.id)
-	res.render('post.pug', {
-		post : post,
-		user : req.user
-	})
+/*---------------------------
+	      看帖界面	
+---------------------------*/
+app.get('/post/:id', async(req, res, next) => {
+	try {
+		var post = await db.get(`
+			SELECT id, userId as ownerId, title, content, name as ownerName, timestamp
+			FROM posts JOIN users 
+			ON posts.owner = ownerId 
+			WHERE id=?`, req.params.id)
+		console.log(post)
+		res.render('post.pug', {
+			post : post,
+			user : req.user,
+		})
+	} catch(e) {
+		next(e)
+	}
 })
 
-app.route('/register')	// 注册
-	.get((req, res, next) => {
+/*---------------------------
+	      注册界面	
+---------------------------*/
+app.route('/register')
+	.get(async(req, res, next) => {
 		res.render('register.pug')
 	})
-	.post((req, res, next) => {	
-		if(users.find(it => it.name == req.body.name) == null) {
-			var lastUser = users[users.length - 1]
-			req.body.id = lastUser.id + 1
-			users.push(req.body)
-			res.cookie('user', req.body.name, {
-				signed : true
+	.post(async(req, res, next) => {
+		try {
+			await db.run('INSERT INTO users (name, password) VALUES (?,?)', req.body.name, req.body.password)	// 用户注册信息载人数据库
+			res.cookie('loginUser', req.body.name, {
+				signed : true	
 			})
 			res.render('register-result.pug', {
 				user : req.body,
 				status: 'REGISTER_SUCCESS'
 			})
-		} else {
+		} catch(e) {
+			console.log(e)
 			res.render('register-result.pug', {
 				status: 'USERNAME_USED'
 			})
 		}
+		/* 回调改为try/catch
+		db.run('INSERT INTO users (name, password) VALUES (?,?)', req.body.name, req.body.password, (err) => {	// 用户注册信息载人数据库
+			if (err) {	// 用户名已存在，注册失败
+				res.render('register-result.pug', {
+					status: 'USERNAME_USED'
+				})
+			} else {	// 新用户注册成功
+				res.cookie('loginUser', req.body.name, {
+					signed : true	
+				})
+				res.render('register-result.pug', {
+					user : req.body,
+					status: 'REGISTER_SUCCESS'
+				})
+			}
+		})
+		*/
 	})
 
-app.route('/login')	// 登录
-	.get((req, res, next) => {
+/*---------------------------
+	      登录界面	
+---------------------------*/
+app.route('/login')	
+	.get(async(req, res, next) => {
 		res.render('login.pug')
 	})
-	.post((req, res, next) => {	
-		var user = users.find(it => it.name == req.body.name)
-		if (user) {
-			if (user.password == req.body.password) {
-				res.cookie('user', user.name, {
+	.post(async(req, res, next) => {
+		try {
+			var user = await db.get('SELECT * FROM users WHERE name=? AND password=?', req.body.name, req.body.password)
+			if (user) {   // 从数据库中查到用户名及对应密码
+				res.cookie('loginUser', user.name, {
 					signed: true,
 					expires: new Date(Date.now() + 86400000)
 				})
 				res.redirect('/')
-			} else {
-				res.send('密码错误！')
+			} else {	// 未匹配到用户
+				res.send('用户名或密码错误！')
 			}
-		} else {
-			res.send('用户不存在！')
+		} catch(e) {
+			next(e)
 		}
+
+
+		// db.get('SELECT * FROM users WHERE name=? AND password=?', req.body.name, req.body.password, (err, user) => {
+		// 	if(err) {	// 查询出错
+		// 		next(err)
+		// 	} else {	// 查的过程中没有出错，能查到数据
+		// 		if (user) {   // 从数据库中查到用户名及对应密码
+		// 			res.cookie('loginUser', user.name, {
+		// 				signed: true,
+		// 				expires: new Date(Date.now() + 86400000)
+		// 			})
+		// 			res.redirect('/')
+		// 		} else {	// 未匹配到用户
+		// 			res.send('用户名或密码错误！')
+		// 		}
+		// 	}
+		// })
 	})
 
-app.get('/logout', (req, res, next) => {
-	res.clearCookie('user')
+app.get('/logout', async(req, res, next) => {
+	res.clearCookie('loginUser')
 	res.redirect('/')
 })
 
-app.listen(port,()=> {
-	console.log('Server listening in port', port)
-})
+// app.listen(port,()=> {
+// 	console.log('Server listening in port', port)
+// })

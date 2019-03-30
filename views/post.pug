@@ -4,7 +4,7 @@ if post
 		h1
 			| #{post.title}
 			| 发布人：
-			a(href='/user/#{post.owner}')= post.owner
+			a(href='/user/#{post.ownerId}')= post.ownerName
 		article= post.content
 else
 	div 没有这个帖子
