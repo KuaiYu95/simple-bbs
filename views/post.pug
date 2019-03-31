@@ -1,10 +1,80 @@
 include header.pug
 if post
 	div
-		h1
+		h3
 			| #{post.title}
 			| 发布人：
-			a(href='/user/#{post.ownerId}')= post.ownerName
+			if user && user.userId !== post.ownerId
+				<a href="/user/#{post.ownerId}">#{post.ownerName}</a>
+			else 
+				span= post.ownerName
+			| 
+			if user && user.userId == post.ownerId
+				button(data-post-id=post.id class="delete-post") 删除
 		article= post.content
+
+		ul#comments
+			each comment in comments
+				li
+					p= comment.content
+					| 
+					span by <a href="/user/#{comment.ownerId}">#{comment.ownerName}</a>
+					| 
+					small= moment(comment.timestamp).fromNow()
+					| 
+					if user && comment.ownerId == user.userId
+						button.delete-comment(data-comment-id=comment.commentId) 删除
+		
+		if user
+			h5 添加评论
+			form(action="/add-comment" method="post")
+				textarea(name="content")
+				input(type="hidden" name="postId" value=post.id)
+				br
+				button.add-comment 评论
+		else 
+			p 请<a href="/login">登录</a>后添加评论
 else
-	div 没有这个帖子
+	div 没有这个帖子！
+
+script(src="/static/axios.min.js")
+
+script.
+	var deletePostBtn = document.querySelector('.delete-post')
+	if (deletePostBtn) {
+		deletePostBtn.addEventListener('click', async e => {
+			await axios.delete('/post/' + e.target.dataset.postId)
+			location.href = '/'
+		})
+	}
+	var commentsUl = document.querySelector('#comments')
+	commentsUl.addEventListener('click', async e => {
+		if (e.target.matches('.delete-comment')) {
+			var btn = e.target
+			await axios.delete('/comment/' + btn.dataset.commentId)
+			var li = btn.parentNode
+			var ul = li.parentNode
+			ul.removeChild(li)
+		}
+	})
+	var addCommentBtn = document.querySelector('.add-comment')
+	if (addCommentBtn) {
+		var form = addCommentBtn.form
+		addCommentBtn.addEventListener('click', async e => {
+			e.preventDefault()
+			var req = await axios.post('/add-comment', {
+				content: form.elements.content.value,
+				postId: form.elements.postId.value,
+			})
+			form.elements.content.value = ''
+			var comment = req.data.data.comment
+			var div = document.createElement('div')
+			div.innerHTML = `<li>
+					<p>${comment.content}</p>
+					<span>by <a href="/user/#{user.userId}">#{user.name}</a></span>
+					<small>${new Date(comment.timestamp).toLocaleString()}</small>
+					<button class="delete-comment" data-comment-id="${comment.commentId}">删除</button>
+				</li>`
+			commentsUl.appendChild(div.firstChild)
+		})
+	}

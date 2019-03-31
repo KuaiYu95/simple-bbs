@@ -2,5 +2,9 @@ include header.pug
 ul
 	each post in posts
 		li 
-			a(href='/post/' + post.id)= post.title
+			h3
+				a(href='/post/' + post.id)= post.title
+			| 发帖人：
+			a(href="/user/" + post.ownerId)= post.ownerName    
+			| 发帖时间：
 			small= moment(post.timestamp).fromNow()

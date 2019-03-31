@@ -3,7 +3,10 @@ header
 	a(href="/") 首页
 	| 
 	if user
-		span 欢迎, #{user.name}
+		span 欢迎, 
+		if user.avatar
+			img(src="/avatars/" + user.avatar, alt="")
+		<a href="/user/#{user.userId}">#{user.name}</a>
 		| 
 		a(href="/add-post") 发布
 		| 

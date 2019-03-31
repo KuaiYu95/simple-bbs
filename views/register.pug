@@ -1,9 +1,15 @@
 include header.pug
-form(action="/register" method="post")
+form(action="/register" method="post" enctype="multipart/form-data")
 	| 用户名： 
-	input(type="text" name="name")
+	input(type="text" name="name" autocomplete="off")
 	br
 	| 密码： 
 	input(type="password" name="password")
+	br
+	| Email：
+	input(type="text" name="email")
+	br
+	| 上传头像：
+	input(type="file" name="avatar")
 	br
 	button 注册

@@ -1,9 +1,16 @@
-include header.pug
+//- include header.pug
 form(action="/login" method="post")
 	| 用户名： 
-	input(type="text" name="name")
+	input(type="text" name="name" autocomplete="off")
 	br
 	| 密码： 
 	input(type="password" name="password")
 	br
+	| 
+	img(src="captcha.svg", alt="")
+	br
+	| 验证码： 
+	input(type="text" name="captcha")
+	br
 	button 登录
+	a(href="/register") 注册

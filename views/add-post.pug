@@ -1,11 +1,9 @@
 include header.pug
 form(action="/add-post" method="post")
 	| 标题： 
-	input(type="text" name="title")
+	input(type="text" name="title" autocomplete="off")
 	br
 	| 内容： 
 	textarea(name="content")
 	br
 	button 发布
-
-	create table users (userId integer primary key autoincrement, name string unique, password string not null, email string unique, avatar string);
