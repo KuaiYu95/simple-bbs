@@ -71,7 +71,7 @@ script.
 			var div = document.createElement('div')
 			div.innerHTML = `<li>
 					<p>${comment.content}</p>
-					<span>by <a href="/user/#{user.userId}">#{user.name}</a></span>
+					
 					<small>${new Date(comment.timestamp).toLocaleString()}</small>
 					<button class="delete-comment" data-comment-id="${comment.commentId}">删除</button>
 				</li>`

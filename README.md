@@ -14,3 +14,25 @@
 + 删评论
 + 上传头像
 + 验证码
+
+CREATE TABLE posts (
+id integer primary key autoincrement,
+title string not null,
+content string,
+owner integer not null,
+timestamp integer not null);
+
+CREATE TABLE users (
+userId integer primary key autoincrement,
+name string unique,
+password string not null,
+email string unique,
+avatar string);
+
+CREATE TABLE comments (
+commentId integer primary key autoincrement,
+content string not null,
+postId integer not null,
+ownerId integer not null,
+timestamp interger not null);
+

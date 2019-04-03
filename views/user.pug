@@ -1,17 +1,20 @@
 include header.pug
-//- doctype html
-//- header
-//- 	a(href="/") 首页
-//- 	| 
-//- 	if user
-//- 		span 欢迎, 
-//- 		img(src="/avatars/" + user.avatar, alt="")
-//- 		<a href="/user/#{user.userId}">#{user.name}</a>
-//- 		| 
-//- 		a(href="/add-post") 发布
-//- 		| 
-//- 		a(href="/logout") 退出
-//- 	else
-//- 		a(href="/login") 登录
-//- 		| 
-//- 		a(href="/register") 注册
+
+h3 我的帖子
+	ul
+		each post in posts
+			li
+				p= post.content
+					| 
+					small= moment(post.timestamp).fromNow()
+
+
+
+
+h3 我的评论
+	ul
+		each comment in comments
+			li
+				p= comment.content
+					| 
+					small= moment(comment.timestamp).fromNow()

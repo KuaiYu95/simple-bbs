@@ -11,7 +11,10 @@ const cookieParser = require('cookie-parser')
 const svgCaptcha = require('svg-captcha')
 const logger = require('morgan')
 const multer = require('multer')
-const upload = multer({dest: __dirname + '/avatars'})
+const upload = multer({
+	dest: __dirname + '/avatars',
+	limits: {fileSize: 50000, files: 1},	// 每次最多上传一个文件，大小不超过50K
+})
 const app = express()
 const port = 8088
 
@@ -24,7 +27,7 @@ sqlite.open(__dirname + '/bbs.sqlite3').then(val => {
 })
 
 app.locals.pretty = true
-app.set('view engine', 'pug')//设置使用的模板引擎
+app.set('view engine', 'pug')  //设置使用的模板引擎
 // app.set('views', __dirname + '/templates')//设置模板文件的文件夹
 
 // app.engine('hbs', require('hbs').__express)
@@ -84,8 +87,19 @@ app.get('/', async(req, res, next) => {
 	      用户界面	
 ---------------------------*/
 app.get('/user/:id', async(req, res, next) => {
-	var user = await db.get('SELECT * FROM users WHERE userId=?', req.params.id)
-	res.render('user.pug', {user})
+	if (req.user && req.user.userId === req.params.id) {
+		var comments = await db.all(`
+			SELECT name AS ownerName, * FROM comments JOIN users ON ownerId=?`, req.params.id)
+		var posts = await db.all('SELECT * FROM posts WHERE owner=?', req.params.id)
+		res.render('user.pug', {
+			posts : posts,
+			user : req.user,
+			comments : comments,
+			moment : moment
+		})
+	} else {
+		res.send('未登录！')
+	}
 })
 
 /*---------------------------
