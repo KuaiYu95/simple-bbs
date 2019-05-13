@@ -1,15 +1,25 @@
 include header.pug
-form(action="/register" method="post" enctype="multipart/form-data")
-	| 用户名： 
-	input(type="text" name="name" autocomplete="off")
-	br
-	| 密码： 
-	input(type="password" name="password")
-	br
-	| Email：
-	input(type="text" name="email")
-	br
-	| 上传头像：
-	input(type="file" name="avatar")
-	br
-	button 注册
+form(action="/register" method="post" enctype="multipart/form-data" class="form-horizontal")
+	div(class="form-group")
+		label(for="UserName" class="col-sm-2 control-label") 用户名
+		div(class="col-sm-3") 
+			input(type="text" name="name" class="form-control" autocomplete="off" placeholder="UserName")
+
+	div(class="form-group")
+		label(for="Password" class="col-sm-2 control-label") 密码
+		div(class="col-sm-3") 
+			input(type="password" name="password" class="form-control" placeholder="Password")
+
+	div(class="form-group")
+		label(for="Email" class="col-sm-2 control-label") Email
+		div(class="col-sm-3") 
+			input(type="email" name="email" class="form-control" placeholder="Email")
+
+	div(class="form-group")
+		label(for="Avatar" class="col-sm-2 control-label") 上传头像
+		div(class="col-sm-3") 
+			input(type="file" name="avatar" class="form-control" placeholder="Avatar")
+
+	div(class="form-group")
+		div(class="col-sm-offset-2 col-sm-3")
+			button(type="submit" class="btn btn-default") 注册

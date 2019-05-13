@@ -1,9 +1,19 @@
 include header.pug
-form(action="/add-post" method="post")
-	| 标题： 
-	input(type="text" name="title" autocomplete="off")
-	br
-	| 内容： 
-	textarea(name="content")
-	br
-	button 发布
+div(class="container")
+  div(class="row")
+    div(class="offset4 span4")
+      form(action="/add-post" method="post" class="form-horizontal ")
+        div(class="form-group")
+          label(for="title" class="col-sm-3 control-label") 标题
+          div(class="col-sm-5") 
+            input(type="text" class="form-control" name="title" autocomplete="off")
+
+        div(class="form-group")
+          label(for="content" class="col-sm-3 control-label") 内容
+          div(class="col-sm-5") 
+            textarea(name="content" class="form-control content" rows="10")
+
+
+        div(class="form-group")
+          div(class="col-sm-offset-3 col-sm-5")
+            button(class="btn btn-default") 发布

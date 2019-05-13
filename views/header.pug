@@ -1,17 +1,30 @@
 doctype html
 header
-	a(href="/") 首页
-	| 
-	if user
-		span 欢迎, 
-		if user.avatar
-			img(src="/avatars/" + user.avatar, alt="")
-		<a href="/user/#{user.userId}">#{user.name}</a>
-		| 
-		a(href="/add-post") 发布
-		| 
-		a(href="/logout") 退出
-	else
-		a(href="/login") 登录
-		| 
-		a(href="/register") 注册
+	link(rel="stylesheet", href="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css")
+
+	nav(class="navbar navbar-default navbar-static-top")
+		div(div class="container")
+			div(class="navbar-header")
+				<a class="navbar-brand" href="/">个人主页</a>
+			div(id="navbar" class="navbar-collapse collapse")
+				ul(class="nav navbar-nav")
+					li(class="active")
+						a(href="/") 首页
+					if user
+						if user.avatar
+							li
+								img(src="/avatars/" + user.avatar, alt="")
+						li
+							<a href="/user/#{user.userId}">#{user.name}</a>
+						li
+							a(href="/add-post") 发布
+						li
+							a(href="/logout") 退出
+					else
+						li
+							a(href="/login") 登录
+						li
+							a(href="/register") 注册
+
+	script(src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js")
+	script(src="https://cdn.jsdelivr.net/npm/bootstrap@3.3.7/dist/js/bootstrap.min.js")

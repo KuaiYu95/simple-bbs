@@ -1,5 +1,5 @@
 include header.pug
-ul
+ul(style="list-style: none;")
 	each post in posts
 		li 
 			h3
@@ -8,3 +8,5 @@ ul
 			a(href="/user/" + post.ownerId)= post.ownerName    
 			| 发帖时间：
 			small= moment(post.timestamp).fromNow()
+
+

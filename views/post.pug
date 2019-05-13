@@ -10,7 +10,7 @@ if post
 				span= post.ownerName
 			| 
 			if user && user.userId == post.ownerId
-				button(data-post-id=post.id class="delete-post") 删除
+				button(data-post-id=post.id class="delete-post btn btn-default") 删除
 		article= post.content
 
 		ul#comments
@@ -28,10 +28,10 @@ if post
 		if user
 			h5 添加评论
 			form(action="/add-comment" method="post")
-				textarea(name="content")
+				textarea(name="content" class="form-control" rows="3")
 				input(type="hidden" name="postId" value=post.id)
 				br
-				button.add-comment 评论
+				button(class="add-comment btn btn-default") 评论
 		else 
 			p 请<a href="/login">登录</a>后添加评论
 else
